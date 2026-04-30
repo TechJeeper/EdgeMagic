@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EdgeMagic — edge chamfer &amp; fillet in the browser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/edgemagic.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+      "fflate": "https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div>
+          <h1>EdgeMagic</h1>
+          <p class="tagline">Chamfer &amp; fillet on mesh edges — runs in your browser</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button type="button" id="btn-help" class="btn btn-ghost" title="Help">Help</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="panel panel-left">
+        <section class="card">
+          <h2>Model</h2>
+          <label class="file-drop" id="file-drop">
+            <input type="file" id="file-input" accept=".stl,.STL,.obj,.OBJ,.3mf,.3MF,.step,.stp,.STEP,.STP" hidden />
+            <span class="file-drop-title">Drop a file or click to upload</span>
+            <span class="file-drop-hint">STL · OBJ · 3MF · STEP</span>
+          </label>
+          <p id="model-status" class="status muted">No file loaded</p>
+          <div class="row row-tight">
+            <button type="button" id="btn-reset-view" class="btn btn-secondary" disabled>Reset view</button>
+            <button type="button" id="btn-clear-model" class="btn btn-secondary" disabled>Clear</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Edges</h2>
+          <p class="hint">Click edges in the viewport. Hold <kbd>Shift</kbd> to add to the selection.</p>
+          <label class="field">
+            <span>Feature angle (°)</span>
+            <input type="range" id="slider-feature-angle" min="5" max="90" value="35" />
+            <span class="value" id="val-feature-angle">35°</span>
+          </label>
+          <div class="row">
+            <button type="button" id="btn-rebuild-edges" class="btn btn-secondary" disabled>Rebuild edges</button>
+            <button type="button" id="btn-clear-selection" class="btn btn-secondary" disabled>Clear selection</button>
+          </div>
+          <p id="selection-count" class="status muted">0 edges selected</p>
+        </section>
+
+        <section class="card">
+          <h2>Operation</h2>
+          <div class="seg" role="group" aria-label="Operation type">
+            <button type="button" id="op-chamfer" class="seg-btn is-active" data-op="chamfer">Chamfer</button>
+            <button type="button" id="op-fillet" class="seg-btn" data-op="fillet">Fillet</button>
+          </div>
+          <label class="field" id="field-chamfer-size">
+            <span>Chamfer size</span>
+            <input type="range" id="slider-chamfer" min="0" max="100" value="25" />
+            <span class="value" id="val-chamfer">25%</span>
+          </label>
+          <label class="field hidden" id="field-fillet">
+            <span>Fillet radius</span>
+            <input type="range" id="slider-fillet" min="0" max="100" value="40" />
+            <span class="value" id="val-fillet">40%</span>
+          </label>
+          <label class="field">
+            <span>Smoothing passes (fillet)</span>
+            <input type="range" id="slider-fillet-passes" min="1" max="12" value="5" />
+            <span class="value" id="val-fillet-passes">5</span>
+          </label>
+          <div class="row">
+            <button type="button" id="btn-apply" class="btn btn-primary" disabled>Apply to selection</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Export</h2>
+          <div class="row">
+            <button type="button" id="btn-export-stl" class="btn btn-primary" disabled>Download STL</button>
+            <button type="button" id="btn-export-3mf" class="btn btn-primary" disabled>Download 3MF</button>
+          </div>
+        </section>
+      </aside>
+
+      <div class="viewport-wrap">
+        <div id="viewport" class="viewport" aria-label="3D viewport"></div>
+        <div id="toast" class="toast" role="status" aria-live="polite"></div>
+        <div id="loading-overlay" class="loading-overlay hidden">
+          <div class="spinner"></div>
+          <p id="loading-text">Loading…</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- STEP: OpenCascade import (WASM, lazy-loaded on first STEP file) -->
+  <script src="https://cdn.jsdelivr.net/npm/occt-import-js@0.0.23/dist/occt-import-js.js"></script>
+
+  <div id="modal-welcome" class="modal" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+    <div class="modal-card">
+      <h2 id="welcome-title">Quick start</h2>
+      <ol class="welcome-steps">
+        <li>Upload an <strong>STL</strong>, <strong>OBJ</strong>, <strong>3MF</strong>, or <strong>STEP</strong> file.</li>
+        <li>Adjust <strong>Feature angle</strong> if needed, then click <strong>Rebuild edges</strong>.</li>
+        <li>Click edges in the 3D view (hold <kbd>Shift</kbd> for multiple).</li>
+        <li>Choose <strong>Chamfer</strong> or <strong>Fillet</strong>, tune sliders, then <strong>Apply to selection</strong>.</li>
+        <li>Download as <strong>STL</strong> or <strong>3MF</strong>.</li>
+      </ol>
+      <p class="hint">STEP import loads a one-time Open Cascade module (~few MB). Processing is mesh-based after import.</p>
+      <div class="modal-actions">
+        <label class="check">
+          <input type="checkbox" id="welcome-never" />
+          <span>Don’t show this again</span>
+        </label>
+        <button type="button" id="welcome-dismiss" class="btn btn-primary">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-help" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="modal-card modal-wide">
+      <button type="button" class="modal-close" id="help-close" aria-label="Close help">&times;</button>
+      <h2 id="help-title">Help</h2>
+      <div class="help-body">
+        <section>
+          <h3>Supported formats</h3>
+          <ul>
+            <li><strong>STL / OBJ / 3MF</strong> — loaded directly in the browser.</li>
+            <li><strong>STEP (.step, .stp)</strong> — tessellated using Open Cascade (occt-import-js). First use downloads WASM.</li>
+          </ul>
+        </section>
+        <section>
+          <h3>Edges &amp; selection</h3>
+          <p>Edges are detected where the angle between two faces exceeds the <strong>feature angle</strong>. Click an edge segment to select it; <kbd>Shift</kbd>+click toggles additional edges. Boundary edges of open meshes are included.</p>
+        </section>
+        <section>
+          <h3>Chamfer &amp; fillet</h3>
+          <p><strong>Chamfer</strong> applies a flat bevel-like cut on selected edges (mesh approximation).</p>
+          <p><strong>Fillet</strong> creates a rounded edge by smoothing after a small inward bevel.</p>
+        </section>
+        <section>
+          <h3>Export</h3>
+          <p><strong>STL</strong> is binary. <strong>3MF</strong> is a minimal Core spec package (single mesh) suitable for slicers and viewers.</p>
+        </section>
+        <section>
+          <h3>Privacy</h3>
+          <p>All processing happens in your browser. Files are not uploaded to a server.</p>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
