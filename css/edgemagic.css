@@ -150,6 +150,60 @@ body {
   color: var(--muted);
 }
 
+.sidebar-footer {
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 0.78rem;
+  color: var(--muted);
+  line-height: 1.55;
+  text-align: center;
+}
+
+.sidebar-footer p {
+  margin: 0 0 8px;
+}
+
+.sidebar-footer p:last-child {
+  margin-bottom: 0;
+}
+
+.sidebar-bmc {
+  margin-bottom: 12px;
+}
+
+.sidebar-bmc a {
+  display: inline-block;
+  line-height: 0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.sidebar-bmc a:hover {
+  opacity: 0.9;
+  text-decoration: none;
+}
+
+.sidebar-bmc img {
+  width: 109px;
+  max-width: 100%;
+  height: auto;
+  vertical-align: middle;
+}
+
+.sidebar-footer a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.sidebar-footer a:hover {
+  text-decoration: underline;
+}
+
+.sidebar-footer .sidebar-bmc a:hover {
+  text-decoration: none;
+}
+
 .file-drop {
   display: flex;
   flex-direction: column;
