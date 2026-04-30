@@ -4,6 +4,31 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EdgeMagic — edge chamfer &amp; fillet in the browser</title>
+  <meta name="description" content="Apply chamfer and fillet to mesh edges in your browser. Load STL, OBJ, 3MF, or STEP, select edges, export STL or 3MF. All processing runs locally—no upload." />
+  <meta name="keywords" content="EdgeMagic, chamfer, fillet, mesh edges, STL, OBJ, 3MF, STEP, 3D editing, browser CAD, WebAssembly, Open Cascade" />
+  <meta name="robots" content="index, follow" />
+  <meta name="application-name" content="EdgeMagic" />
+  <meta name="theme-color" content="#0c0e12" />
+  <meta name="color-scheme" content="dark" />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:site_name" content="EdgeMagic" />
+  <meta property="og:title" content="EdgeMagic — edge chamfer &amp; fillet in the browser" />
+  <meta property="og:description" content="Apply chamfer and fillet to mesh edges locally. Supports STL, OBJ, 3MF, and STEP. Export STL or 3MF—no server upload." />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="EdgeMagic — edge chamfer &amp; fillet in the browser" />
+  <meta name="twitter:description" content="Apply chamfer and fillet to mesh edges locally. Supports STL, OBJ, 3MF, and STEP. Export STL or 3MF—no server upload." />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "EdgeMagic",
+    "description": "Browser-based tool to chamfer and fillet mesh edges on STL, OBJ, 3MF, and STEP models with local processing and STL/3MF export.",
+    "applicationCategory": "DesignApplication",
+    "operatingSystem": "Web browser",
+    "browserRequirements": "Requires JavaScript. STEP import uses WebAssembly (Open Cascade)."
+  }
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -101,6 +126,16 @@
 
       <div class="viewport-wrap">
         <div id="viewport" class="viewport" aria-label="3D viewport"></div>
+        <div class="viewport-toolbar" role="toolbar" aria-label="3D view">
+          <button type="button" id="btn-zoom-in" class="btn btn-secondary btn-icon" disabled title="Zoom in" aria-label="Zoom in">+</button>
+          <button type="button" id="btn-zoom-out" class="btn btn-secondary btn-icon" disabled title="Zoom out" aria-label="Zoom out">−</button>
+          <button type="button" id="btn-center-view" class="btn btn-secondary btn-icon" disabled title="Center model" aria-label="Center model">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M12 2v3M12 19v3M2 12h3M19 12h3" />
+            </svg>
+          </button>
+        </div>
         <div id="toast" class="toast" role="status" aria-live="polite"></div>
         <div id="loading-overlay" class="loading-overlay hidden">
           <div class="spinner"></div>

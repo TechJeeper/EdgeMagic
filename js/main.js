@@ -15,6 +15,9 @@ const els = {
   fileInput: document.getElementById("file-input"),
   modelStatus: document.getElementById("model-status"),
   btnResetView: document.getElementById("btn-reset-view"),
+  btnZoomIn: document.getElementById("btn-zoom-in"),
+  btnZoomOut: document.getElementById("btn-zoom-out"),
+  btnCenterView: document.getElementById("btn-center-view"),
   btnClearModel: document.getElementById("btn-clear-model"),
   sliderFeature: document.getElementById("slider-feature-angle"),
   valFeature: document.getElementById("val-feature-angle"),
@@ -162,12 +165,26 @@ function frameObject(object) {
   const center = box.getCenter(new THREE.Vector3());
   controls.target.copy(center);
   const dist = size * 0.9 || 1;
+  controls.minDistance = Math.max(dist * 0.04, 0.0001);
+  controls.maxDistance = Math.max(dist * 120, 10);
   camera.near = Math.max(dist / 2000, 0.0001);
   camera.far = Math.max(dist * 50, 100);
   camera.updateProjectionMatrix();
   camera.position.copy(center.clone().add(new THREE.Vector3(dist, dist * 0.65, dist)));
   controls.update();
   pickThreshold = Math.max(size * 0.015, 0.002);
+}
+
+/** @param {number} factor Multiplier for eye–target distance; below 1 zooms in, above 1 zooms out. */
+function dollyCamera(factor) {
+  if (!camera || !controls || !mesh) return;
+  const offset = camera.position.clone().sub(controls.target);
+  const len = offset.length();
+  if (len < 1e-10) return;
+  const next = THREE.MathUtils.clamp(len * factor, controls.minDistance, controls.maxDistance);
+  offset.multiplyScalar(next / len);
+  camera.position.copy(controls.target.clone().add(offset));
+  controls.update();
 }
 
 function clearModel() {
@@ -215,6 +232,9 @@ function rebuildEdges() {
 function updateUi() {
   const hasMesh = !!mesh;
   els.btnResetView.disabled = !hasMesh;
+  els.btnZoomIn.disabled = !hasMesh;
+  els.btnZoomOut.disabled = !hasMesh;
+  els.btnCenterView.disabled = !hasMesh;
   els.btnClearModel.disabled = !hasMesh;
   els.btnRebuildEdges.disabled = !hasMesh;
   els.btnClearSelection.disabled = !hasMesh || !selected.size;
@@ -416,6 +436,11 @@ function initUi() {
   });
 
   els.btnResetView.addEventListener("click", () => {
+    if (mesh) frameObject(mesh);
+  });
+  els.btnZoomIn.addEventListener("click", () => dollyCamera(0.82));
+  els.btnZoomOut.addEventListener("click", () => dollyCamera(1 / 0.82));
+  els.btnCenterView.addEventListener("click", () => {
     if (mesh) frameObject(mesh);
   });
   els.btnClearModel.addEventListener("click", () => {
